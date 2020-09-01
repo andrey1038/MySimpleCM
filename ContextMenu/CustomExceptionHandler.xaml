@@ -1,0 +1,43 @@
+﻿<Window x:Class="ContextMenu.CustomExceptionHandler"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ContextMenu"
+        mc:Ignorable="d"
+        Title="Ошибка" Height="250" Width="600"
+        ResizeMode="NoResize"
+        Closing="Window_Closing">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="2*"/>
+        </Grid.ColumnDefinitions>
+
+        <Image Source="Icon\D4w8v0zW0AAcwQf.png" Margin="30" 
+               Grid.Column="0" Grid.Row="1"/>
+
+        <StackPanel Margin="20 0 20 0" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1">
+
+            <TextBlock 
+                   Text="Ошибка"
+                   HorizontalAlignment="Center"
+                   Style="{StaticResource HeaderTextBlock}"/>
+
+            <TextBlock
+                    HorizontalAlignment="Center"
+                    TextWrapping="Wrap"
+                    TextAlignment="Center"
+                    Text="В программе произошла ошибка из за которой невозможно продолжить работу программы."/>
+
+            <TextBlock
+                    TextAlignment="Center"
+                    TextWrapping="Wrap"
+                    HorizontalAlignment="Center"
+                    Text="Текст ошибки: "
+                    x:Name="ErrorTextBlock"/>
+
+        </StackPanel>
+
+    </Grid>
+</Window>

@@ -1,0 +1,903 @@
+﻿<Window x:Class="ContextMenu.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ContextMenu"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        mc:Ignorable="d"
+        Title="MySimpleCM" Height="650" Width="1200"
+        KeyDown="Window_KeyDown"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+
+        <local:RadioButtonBoolConverter x:Key="RadioButtonBoolConverter"/> <!--чтобы не плодить лишнюю логику(команды итд)-->
+        <local:ExpanderMultiplyConverter x:Key="ExpanderMultiplyConverter"/> <!--для плавной анимации экспандера см. класс для доп. информации-->
+        
+        <Style x:Key="ExpanderStyle2" TargetType="{x:Type Expander}">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Expander}">
+                        <DockPanel>
+
+                            <ScrollViewer x:Name="ExpanderScrollViewer"
+                                      HorizontalScrollBarVisibility="Hidden"
+                                      VerticalScrollBarVisibility="Hidden"
+                                      HorizontalContentAlignment="Stretch"
+                                      VerticalContentAlignment="Bottom"
+                                      DockPanel.Dock="Top">
+
+                                <ScrollViewer.Tag>
+                                    <sys:Double>0.0</sys:Double>
+                                </ScrollViewer.Tag>
+
+                                <ScrollViewer.Height>
+                                    <MultiBinding Converter="{StaticResource ExpanderMultiplyConverter}">
+                                        <Binding Path="ActualHeight" ElementName="ExpanderContent"/>
+                                        <Binding Path="Tag" RelativeSource="{RelativeSource Self}"/>
+                                    </MultiBinding>
+                                </ScrollViewer.Height>
+
+                                <ContentPresenter x:Name="ExpanderContentPresenter" ContentSource="Content"/>
+
+                            </ScrollViewer>
+
+                        </DockPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="true">
+                                <Setter Property="Visibility" TargetName="ExpanderContentPresenter" Value="Visible"/>
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ExpanderScrollViewer"
+                                                             Storyboard.TargetProperty="Tag"
+                                                             To="500"
+                                                             Duration="0:0:1"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="ExpanderScrollViewer"
+                                                             Storyboard.TargetProperty="Tag"
+                                                             To="0"
+                                                             Duration="0:0:0.5"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!--Castom parameters Key expander-->
+        <!--<Expander 
+                            Panel.ZIndex="1"
+                            Grid.ColumnSpan="3"
+                            VerticalAlignment="Top"
+                            HorizontalAlignment="Stretch"
+                            Width="800"
+                            IsExpanded="{Binding IsTopMenuOpen}"
+                            Style="{StaticResource ExpanderStyle2}">
+                        <Grid Background="WhiteSmoke">
+
+                            
+
+                        </Grid>
+                    </Expander>-->
+
+        <Style TargetType="TextBlock" x:Key="StyleTextBlockNameParam">
+            <Setter Property="FontSize" Value="18"/>
+        </Style>
+
+        <Style TargetType="TextBox" x:Key="StyleTextBoxParam">
+            <Setter Property="BorderThickness" Value="0 0 0 1"/>
+            <Setter Property="BorderBrush" Value="Black"/>
+            <Setter Property="FontSize" Value="18"/>
+        </Style>
+
+        <Style TargetType="Button" x:Key="TypeRegButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border>
+                            <Grid>
+                                <TextBlock x:Name="mytext"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="2*" MinWidth="740"/>
+        </Grid.ColumnDefinitions>
+
+        <!--Графический элемент контекстного меню-->
+        <Grid Grid.Column="0" Background="{Binding ElementName=LeftBackraundBrushList, Path=SelectedValue}">
+            <!--<ListBox VerticalAlignment="Center" Height="Auto"
+                     HorizontalAlignment="Center" MinWidth="260"
+                     Padding="0 3 0 3" Margin="35 0"
+                     Background="#f2f2f2"
+                     BorderThickness="1" BorderBrush="#a0a0a0"
+                     ItemsSource="{Binding Path=Groups}"
+                     x:Name="ContextMenu">
+                <ListBox.BitmapEffect>
+                    <DropShadowBitmapEffect Opacity="0.7" ShadowDepth="3" />
+                </ListBox.BitmapEffect>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ListBox ItemsSource="{Binding Path=Keys}"
+                                             Background="#f2f2f2" BorderThickness="0"
+                                             x:Name="ListBoxKeys" SelectionChanged="ListBoxKeys_SelectionChanged">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem">
+                                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        
+                                                        <ControlTemplate TargetType="ListBoxItem">
+                                                            <Grid x:Name="WrapperTemplate" 
+                                                                  Height="24"
+                                                                  Margin="1 0 1 0">
+                                                                <TextBlock Text="{Binding Path=Title}" 
+                                                                           VerticalAlignment="Center"
+                                                                           Margin="40 0 0 0"
+                                                                           Foreground="{Binding Path=ColorDisabled}"/>
+                                                            </Grid>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="true">
+                                                                    <Setter TargetName="WrapperTemplate" Property="Background" Value="#d9d9d9"/>
+                                                                </Trigger>
+                                                                <Trigger Property="IsSelected" Value="true">
+                                                                    <Setter TargetName="WrapperTemplate" Property="Background" Value="#d9d9d9"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                    </ListBox>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>-->
+            <TextBlock
+                VerticalAlignment="Top"
+                HorizontalAlignment="Left"
+                Margin="5"
+                
+                FontSize="16"
+                Foreground="Yellow"
+                Text="Режим SHIFT отключен.">
+
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SHIFT}" Value="True">
+                                <Setter Property="Visibility" Value="Hidden"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding SHIFT}" Value="False">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+                
+                
+            </TextBlock>
+            <ListBox ItemsSource="{Binding ContextMenuKeys}" SelectedItem="{Binding SelectedKey}"
+                     VerticalAlignment="Center" HorizontalAlignment="Center"
+                     Height="{Binding HeightContextMenu}" MinWidth="260" Padding="0 5"
+                     Background="#f2f2f2">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Margin" Value="0 0 0 0"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Grid x:Name="WrapperTemplate" Height="24">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="30"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <TextBlock Text="{Binding Path=Title}" 
+                                                   x:Name="TitleCMK" 
+                                                   Grid.Column="1" 
+                                                   VerticalAlignment="Center"/>
+
+                                        <Polyline Grid.Column="2" x:Name="IsMenuKey" Visibility="Collapsed"
+                                                  VerticalAlignment="Center"
+                                                  Margin="0 1 7 0"
+                                                  Points="0,0 6,6 0,12"
+                                                  Stroke="Black"
+                                                  StrokeThickness="1"/>
+
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsMenu}" Value="True">
+                                            <Setter TargetName="IsMenuKey" Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Path=IsMenu}" Value="Null">
+                                            <Setter TargetName="IsMenuKey" Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Path=Disabled}" Value="True">
+                                            <Setter TargetName="TitleCMK" Property="Foreground" Value="Gray"/>
+                                        </DataTrigger>
+                                        <Trigger Property="IsMouseOver" Value="true">
+                                            <Setter TargetName="WrapperTemplate" Property="Background" Value="#d9d9d9"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="true">
+                                            <Setter TargetName="WrapperTemplate" Property="Background" Value="#d9d9d9"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+        </Grid>
+
+        <!--Splitter-->
+        <GridSplitter HorizontalAlignment="Center" VerticalAlignment="Stretch" Width="4" Background="White" Grid.Column="1"/>
+
+        <!--Основная область программы-->
+        <ScrollViewer  Grid.Column="2" Padding="10" MinWidth="450"
+                      Background="{Binding ElementName=RightBackraundBrushList, Path=SelectedValue}">
+            <Grid Width="700">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!--О программе-->
+                <Grid Grid.Row="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <TextBlock HorizontalAlignment="Right" Margin="0 0 0 10"
+                               Grid.Row="0"
+                               Style="{StaticResource HeaderTextBlock}"
+                               Text="О программе">
+                    </TextBlock>
+                    <TextBlock Style="{StaticResource StandartText}"
+                        Grid.Row="1" Margin="150 0 0 0" MaxWidth="500"
+                               TextAlignment="Right" HorizontalAlignment="Right"
+                               TextWrapping="Wrap">MySimpleCM - это программа редактирования элементов контекстного меню, в ОС Widows10. Функционал программы не большой, по этому если вы программист и у вас есть предложения по улучшению программы пишите на почту "andrey.akulinichev@mail.ru" или в VK id280074340. Git ""</TextBlock>
+                </Grid>
+
+                <!--Внешний вид-->
+                <Grid Grid.Row="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <TextBlock HorizontalAlignment="Left" Grid.Row="0" Margin="0 0 0 10"
+                               Style="{StaticResource HeaderTextBlock}"
+                               Text="Внешний вид">
+                    </TextBlock>
+                    <StackPanel Grid.Row="1" Orientation="Horizontal">
+                        <TextBlock FontSize="16" FontWeight="Bold">Left Background:</TextBlock>
+                        <ListBox Background="Transparent" BorderThickness="0"
+                         x:Name="LeftBackraundBrushList" SelectedIndex="{Binding NumberBackground}">
+                            <ListBox.Items>
+                                <SolidColorBrush Color="Black"/>
+                                <LinearGradientBrush>
+                                    <GradientStop Color="#232526" Offset="0"/>
+                                    <GradientStop Color="#FF4B4D4F" Offset="1"/>
+                                </LinearGradientBrush>
+                                <LinearGradientBrush>
+                                    <GradientStop Color="#FF0099" Offset="0"/>
+                                    <GradientStop Color="#493240" Offset="1"/>
+                                </LinearGradientBrush>
+                                <LinearGradientBrush>
+                                    <GradientStop Color="#8A2387" Offset="0"/>
+                                    <GradientStop Color="#E94057" Offset="0.7"/>
+                                    <GradientStop Color="#F27121" Offset="1"/>
+                                </LinearGradientBrush>
+                                <LinearGradientBrush>
+                                    <GradientStop Color="#fc4a1a" Offset="0"/>
+                                    <GradientStop Color="#f7b733" Offset="1"/>
+                                </LinearGradientBrush>
+                                <LinearGradientBrush>
+                                    <GradientStop Color="#22c1c3" Offset="0"/>
+                                    <GradientStop Color="#fdbb2d" Offset="1"/>
+                                </LinearGradientBrush>
+                                <LinearGradientBrush>
+                                    <GradientStop Color="#FFFF00FC" Offset="0"/>
+                                    <GradientStop Color="#FFFF669D" Offset="1"/>
+                                </LinearGradientBrush>
+                                <LinearGradientBrush>
+                                    <GradientStop Color="#ff00cc" Offset="0"/>
+                                    <GradientStop Color="#333399" Offset="1"/>
+                                </LinearGradientBrush>
+                                <LinearGradientBrush>
+                                    <GradientStop Color="#fc00ff" Offset="0"/>
+                                    <GradientStop Color="#00dbde" Offset="1"/>
+                                </LinearGradientBrush>
+                                <LinearGradientBrush>
+                                    <GradientStop Color="#1FA2FF" Offset="0"/>
+                                    <GradientStop Color="#12D8FA" Offset="0.5"/>
+                                    <GradientStop Color="#A5FECB" Offset="1"/>
+                                </LinearGradientBrush>
+                            </ListBox.Items>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border Height="15" Width="15" Background="{Binding}"
+                                                BorderThickness="1.5" BorderBrush="Black"
+                                                Margin="2 0" CornerRadius="10">
+
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                        </ListBox>
+                    </StackPanel>
+                </Grid>
+
+                <!--Тип контекстного меню-->
+                <Grid Grid.Row="4">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <TextBlock HorizontalAlignment="Right" Grid.Row="0" Margin="0 0 0 10"
+                               Style="{StaticResource HeaderTextBlock}"
+                               Text="Тип контекстного меню">
+                    </TextBlock>
+                    <StackPanel 
+                        Grid.Row="1"
+                        HorizontalAlignment="Right"
+                        Width="400">
+
+                        <Button Command="{Binding Use_DesktopBackground}">
+                            <Button.Template>
+                                <ControlTemplate>
+                                    <Border
+                                        x:Name="TypeContextMenu_Border"
+                                        Padding="6"
+                                        BorderThickness="1"
+                                        Background="Transparent">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+
+
+                                            <TextBlock 
+                                                Grid.Row="0"
+                                                FontSize="18"
+                                                HorizontalAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                Text="DesktopBackground"
+                                                />
+                                            <TextBlock 
+                                                Grid.Row="1" 
+                                                FontSize="16"
+                                                HorizontalAlignment="Right"
+                                                TextAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                Text="Этот раздел отвечает за элементы появляющиеся при вызове контекстного меню на рабочем столе."
+                                                />
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <!--<Trigger Property="IsSelected" Value="true">
+                                            <Setter TargetName="TypeContextMenu_Border" Property="Background" Value="LightGray"/>
+                                        </Trigger>-->
+                                        <Trigger Property="IsMouseOver" Value="true">
+                                            <Setter TargetName="TypeContextMenu_Border" Property="Background" Value="#FFE7E7E7"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button Command="{Binding Use_FolderBackground}">
+                            <Button.Template>
+                                <ControlTemplate>
+                                    <Border
+                                        x:Name="TypeContextMenu_Border"
+                                        Padding="6"
+                                        BorderThickness="1"
+                                        Background="Transparent">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+
+
+                                            <TextBlock 
+                                                Grid.Row="0"
+                                                FontSize="18"
+                                                HorizontalAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                Text="FolderBackground"
+                                                />
+                                            <TextBlock 
+                                                Grid.Row="1" 
+                                                FontSize="16"
+                                                HorizontalAlignment="Right"
+                                                TextAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                Text="Элементы контекстного меню данного раздела можно вызвать правой кнопкой в пустом месте любой папки."
+                                                />
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <!--<Trigger Property="IsSelected" Value="true">
+                                            <Setter TargetName="TypeContextMenu_Border" Property="Background" Value="LightGray"/>
+                                        </Trigger>-->
+                                        <Trigger Property="IsMouseOver" Value="true">
+                                            <Setter TargetName="TypeContextMenu_Border" Property="Background" Value="#FFE7E7E7"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button Command="{Binding Use_Directory}">
+                            <Button.Template>
+                                <ControlTemplate>
+                                    <Border
+                                        x:Name="TypeContextMenu_Border"
+                                        Padding="6"
+                                        BorderThickness="1"
+                                        Background="Transparent">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+
+
+                                            <TextBlock 
+                                                Grid.Row="0"
+                                                FontSize="18"
+                                                HorizontalAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                Text="Directory"
+                                                />
+                                            <TextBlock 
+                                                Grid.Row="1" 
+                                                FontSize="16"
+                                                HorizontalAlignment="Right"
+                                                TextAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                Text="Элементы контекстного меню для всех папок."
+                                                />
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <!--<Trigger Property="IsSelected" Value="true">
+                                            <Setter TargetName="TypeContextMenu_Border" Property="Background" Value="LightGray"/>
+                                        </Trigger>-->
+                                        <Trigger Property="IsMouseOver" Value="true">
+                                            <Setter TargetName="TypeContextMenu_Border" Property="Background" Value="#FFE7E7E7"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                        <Button Command="{Binding Use_File}">
+                            <Button.Template>
+                                <ControlTemplate>
+                                    <Border
+                                        x:Name="TypeContextMenu_Border"
+                                        Padding="6"
+                                        BorderThickness="1"
+                                        Background="Transparent">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="*"/>
+                                            </Grid.RowDefinitions>
+
+
+                                            <TextBlock 
+                                                Grid.Row="0"
+                                                FontSize="18"
+                                                HorizontalAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                Text="File"
+                                                />
+                                            <TextBlock 
+                                                Grid.Row="1" 
+                                                FontSize="16"
+                                                HorizontalAlignment="Right"
+                                                TextAlignment="Right"
+                                                TextWrapping="Wrap"
+                                                Text="Элементы контекстного меню для всех файлов."
+                                                />
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <!--<Trigger Property="IsSelected" Value="true">
+                                            <Setter TargetName="TypeContextMenu_Border" Property="Background" Value="LightGray"/>
+                                        </Trigger>-->
+                                        <Trigger Property="IsMouseOver" Value="true">
+                                            <Setter TargetName="TypeContextMenu_Border" Property="Background" Value="#FFE7E7E7"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                    </StackPanel>
+                </Grid>
+
+                <!--shift-->
+                <Grid Grid.Row="6">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock HorizontalAlignment="Left" Grid.Row="0" Margin="0 0 0 10"
+                               Style="{StaticResource HeaderTextBlock}"
+                               Text="Клавиша SHIFT"/>
+
+                    <StackPanel HorizontalAlignment="Left"
+                        Grid.Row="1" 
+                        Width="400">
+
+                        <TextBlock
+                            FontSize="16"
+                            HorizontalAlignment="Left"
+                            TextAlignment="Left"
+                            TextWrapping="Wrap"
+                            Text="Оказывается можно увеличить количество функций в контекстном меню Windows простой кнопкой Shift. Сочетание клавиш Shift + RMB открывает расширеный список команд контекстного меню."
+                            />
+
+
+                        <StackPanel Orientation="Horizontal" Margin="0 7 0 0">
+                            <TextBlock Text="клавиша: " Margin="0 0 5 0" FontSize="16" VerticalAlignment="Center"/>
+                            <CheckBox IsChecked="{Binding SHIFT}">
+                                <CheckBox.Template>
+                                    <ControlTemplate>
+                                        <Border 
+                                            Background="Transparent"
+                                            Width="60" Height="25"
+                                            BorderThickness="2" BorderBrush="Black" 
+                                            CornerRadius="3">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Center"
+                                                FontWeight="Bold"
+                                                Text="SHIFT"/>
+                                        </Border>
+
+                                    </ControlTemplate>
+                                </CheckBox.Template>
+                                <CheckBox.Style>
+                                    <Style TargetType="CheckBox">
+                                        <Setter Property="BitmapEffect">
+                                            <Setter.Value>
+                                                <DropShadowBitmapEffect Opacity="0.35" ShadowDepth="10"/>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter Property="BitmapEffect">
+                                                    <Setter.Value>
+                                                        <DropShadowBitmapEffect Opacity="0.5" ShadowDepth="5"/>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </CheckBox.Style>
+                            </CheckBox>
+                            <TextBlock Margin="15 0 0 0" FontSize="16" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SHIFT}" Value="True">
+                                                <Setter Property="Text" Value="Активная"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding SHIFT}" Value="False">
+                                                <Setter Property="Text" Value="Неактивная"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+
+
+                    </StackPanel>
+
+
+                </Grid>
+
+                <!--Редактор-->
+                <Grid Grid.Row="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition/> <!--заголовок-->
+                        <RowDefinition Height="20"/>
+                        <RowDefinition/> <!--кнопки-->
+                        <RowDefinition Height="20"/>
+                        <RowDefinition/> <!--параметры-->
+                    </Grid.RowDefinitions>
+
+                    <TextBlock HorizontalAlignment="Center" Margin="0 0 0 10"
+                               Grid.Row="0"
+                               Style="{StaticResource HeaderTextBlock}"
+                               Text="Редактор"/>
+
+                    <!--Область кнопок-->
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="4*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="4*"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="2*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Button Style="{StaticResource StyleButton}"
+                                Command="{Binding CreateKeyCommand}"
+                                Content="создать новый ключ"
+                                Height="50" 
+                                Grid.Row="0"
+                                Grid.Column="2"
+                                >
+                        </Button>
+                        <Button Style="{StaticResource StyleButton}"
+                                Command="{Binding DeleteKeyCommand}"
+                                Content="удалить ключ"
+                                Height="50" 
+                                Grid.Row="0"
+                                Grid.Column="4"
+                                >
+                        </Button>
+                        <Button Style="{StaticResource StyleButton}"
+                                Command="{Binding EscCommand}"
+                                Content="esc"
+                                Height="50"
+                                Width="50"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                >
+                        </Button>
+                        <Button Style="{StaticResource StyleButton}"
+                                Command="{Binding SaveKeyCommand}"
+                                Content="сохранить"
+                                Height="50"
+                                Grid.Row="0"
+                                Grid.Column="6"
+                                >
+                        </Button>
+
+                        <!--вторая строка кнопок-->
+
+                        <Button Style="{StaticResource StyleButton}"
+                                Command="{Binding OpenMenuKey}"
+                                Content="открыть"
+                                Height="50"
+                                Grid.Row="1"
+                                Grid.Column="6"
+                                >
+                        </Button>
+
+                        <Button Style="{StaticResource StyleButton}"
+                                Command="{Binding OpenWindowDeletedKeys}"
+                                Content="Ранее удаленные"
+                                Height="50"
+                                Grid.Row="1"
+                                Grid.Column="4"
+                                >
+                        </Button>
+
+                        <Button Style="{StaticResource StyleButton}"
+                                Command="{Binding CreateMenuCommand}"
+                                Content="Создать меню"
+                                Height="50"
+                                Grid.Row="1"
+                                Grid.Column="2"
+                                >
+                        </Button>
+
+                        <Button Style="{StaticResource StyleButton}"
+                                Command="{Binding OpenInRegedit}"
+                                Content="Reg."
+                                Height="50"
+                                Width="50"
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                >
+                        </Button>
+
+                    </Grid>
+
+                    <!--Грид который скрывает грид области параметров ключа-->
+                    <Grid Grid.Row="4"
+                          Background="White"
+                          Panel.ZIndex="1">
+
+                        <Border BorderBrush="Black"
+                                BorderThickness="2"
+                                CornerRadius="10">
+
+                            <TextBlock VerticalAlignment="Center"
+                                       HorizontalAlignment="Center"
+                                       Style="{StaticResource StyleTextBlockNameParam}"
+                                       TextAlignment="Center">
+                                
+                                    Выберите ключ в левой панели,<LineBreak/>
+                                    что бы редактировать его параметры.
+
+                            </TextBlock>
+
+                        </Border>
+
+                        <Grid.Style>
+                            <Style TargetType="{x:Type Grid}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding VisibleParamsKey}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding VisibleParamsKey}" Value="False">
+                                        <Setter Property="Visibility" Value="Hidden"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+
+                    </Grid>
+
+                    <!--Область параметров ключа-->
+                    <Grid DataContext="{Binding SelectedKey}" Grid.Row="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="15"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+
+                        <!--++++++++ RegistryName ++++++++-->
+                        <TextBlock Style="{StaticResource StyleTextBlockNameParam}"
+                                   Grid.Column="0" Grid.Row="0"
+                                   Text="Имя в реестре"/>
+                        <TextBox Style="{StaticResource StyleTextBoxParam}"
+                                 Text="{Binding Path=RegistryName, UpdateSourceTrigger=PropertyChanged}"
+                                 Grid.Column="2" Grid.Row="0" x:Name="TB1"/>
+
+
+                        <!--++++++++ MUIVerb ++++++++-->
+                        <TextBlock Style="{StaticResource StyleTextBlockNameParam}"
+                                   Grid.Column="0" Grid.Row="2"
+                                   Text="Видимое имя"/>
+                        <TextBox Style="{StaticResource StyleTextBoxParam}"
+                                 Text="{Binding Path=MUIVerb, UpdateSourceTrigger=PropertyChanged}"
+                                 Grid.Column="2" Grid.Row="2" x:Name="TB2"/>
+
+
+                        <!--++++++++ Command ++++++++-->
+                        <TextBlock Style="{StaticResource StyleTextBlockNameParam}"
+                                   Grid.Column="0" Grid.Row="4"
+                                   Text="Команда"/>
+                        <TextBox 
+                                 Text="{Binding Path=Command, UpdateSourceTrigger=PropertyChanged}"
+                                 x:Name="TB3"
+                                 Grid.Column="2" Grid.Row="4">
+
+                            <TextBox.Style>
+                                <Style TargetType="{x:Type TextBox}">
+                                    <Setter Property="BorderThickness" Value="0 0 0 1"/>
+                                    <Setter Property="BorderBrush" Value="Black"/>
+                                    <Setter Property="FontSize" Value="18"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding CanCommand}" Value="True">
+                                            <Setter Property="IsEnabled" Value="True"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding CanCommand}" Value="False">
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+
+                        </TextBox>
+
+
+                        <!--++++++++ Position ++++++++-->
+                        <TextBlock Style="{StaticResource StyleTextBlockNameParam}"
+                                   Grid.Column="0" Grid.Row="6"
+                                   Text="Позиция"/>
+                        <StackPanel Grid.Column="2" Grid.Row="6">
+                            <RadioButton Content="Top" 
+                                         GroupName="Radio_1"
+                                         IsChecked="{Binding Path=Position, Converter={StaticResource RadioButtonBoolConverter}, ConverterParameter=1}">
+
+                            </RadioButton>
+                            <RadioButton Content="Middle (default)"
+                                         GroupName="Radio_1"
+                                         IsChecked="{Binding Path=Position, Converter={StaticResource RadioButtonBoolConverter}, ConverterParameter=-1}">
+
+                            </RadioButton>
+                            <RadioButton Content="Bottom"
+                                         GroupName="Radio_1"
+                                         IsChecked="{Binding Path=Position, Converter={StaticResource RadioButtonBoolConverter}, ConverterParameter=0}">
+
+                            </RadioButton>
+                        </StackPanel>
+
+
+                        <!--++++++++ Extended ++++++++-->
+                        <TextBlock Style="{StaticResource StyleTextBlockNameParam}"
+                                   Grid.Column="0" Grid.Row="8"
+                                   Text="Shift"/>
+                        <CheckBox IsChecked="{Binding Path=Extended}" 
+                                  Grid.Column="2" Grid.Row="8">
+
+                        </CheckBox>
+
+
+                    </Grid>
+
+                </Grid>
+                
+            </Grid>
+        </ScrollViewer>
+
+    </Grid>
+</Window>
